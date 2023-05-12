@@ -1,0 +1,39 @@
+version: '3.8'
+
+networks:
+  my_network:
+
+services:
+  rabbitmq:
+    container_name: rabbitmq_server
+    image: rabbitmq:3-management
+    restart: on-failure
+    ports:
+      # AMQP protocol port
+      - 5672:5672
+      # HTTP management UI
+      - 15672:15672
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - my_network
+
+  node_services:
+    container_name: product-container
+    image: product-services:0.0.1
+    restart: on-failure
+    build:
+      context: .
+    ports:
+      - 8080:8080
+    environment:
+      - RABBITMQ_URL=amqp://rabbitmq
+    depends_on:
+      - rabbitmq
+    links:
+      - rabbitmq
+    networks:
+      - my_network
+
+volumes:
+  rabbitmq_data: {}
